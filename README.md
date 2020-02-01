@@ -42,8 +42,8 @@ marktor [<location_to_file>] [<subcommand>] [<args>]
 
 For `create`, `delete` and `update`,
 
-1. If *location_to_file* doesn't exist, it will be created!
-2. If *location_to_file* is not given, a file named `marktor.json` would be created in the current directory!
+* If *location_to_file* doesn't exist, it will be created!
+* If *location_to_file* is not given, a file named `marktor.json` would be created in the current directory!
 
 1. **Create a bookmark**
 
