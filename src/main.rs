@@ -101,6 +101,17 @@ impl BookmarkList {
             println!("{}\t\t\t\t\t\t{}", bookmark.name, bookmark.url);
         }
     }
+
+    fn get(&self, name: &str) {
+        println!("Name\t\t\t\t\t\t\tURL");
+        println!("====\t\t\t\t\t\t\t===");
+
+        for bookmark in self.bookmarks.iter() {
+            if bookmark.name.to_ascii_lowercase().contains(&name.to_ascii_lowercase()) {
+                println!("{}\t\t\t\t\t\t{}", bookmark.name, bookmark.url);
+            } 
+        }
+    }
 }
 
 fn add_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str, url: &str) -> Result<()> {
@@ -128,6 +139,10 @@ fn delete_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str
 
 fn list_bookmark(bookmark_list: &BookmarkList) {
     bookmark_list.list();
+}
+
+fn get_bookmark(bookmark_list: &BookmarkList, name: &str) {
+    bookmark_list.get(&name);
 }
 
 fn main() -> Result<()> {
@@ -166,6 +181,12 @@ fn main() -> Result<()> {
                  .help("Name of the bookmark")))
         .subcommand(SubCommand::with_name("list")
             .about("List all bookmarks"))
+        .subcommand(SubCommand::with_name("get")
+            .about("Get an existing bookmark")
+            .arg(Arg::with_name("name")
+                 .required(true)
+                 .index(1)
+                 .help("Name of the bookmark")))
         .get_matches();
 
     let location = matches.value_of("location").unwrap_or("marktor.json");
@@ -196,6 +217,12 @@ fn main() -> Result<()> {
 
     if let Some(_) = matches.subcommand_matches("list") {
         list_bookmark(&bookmark_list);
+    }
+
+    if let Some(sub_match) = matches.subcommand_matches("get") {
+        let name = sub_match.value_of("name").unwrap();
+
+        get_bookmark(&bookmark_list, name);
     }
 
     Ok(())
