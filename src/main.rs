@@ -62,7 +62,25 @@ impl BookmarkList {
         std::fs::write(&config.location, json)?;
 
         Ok(()) 
-    }}
+    }
+
+    fn update(&mut self, name: &str, url: &str) {
+        let mut found = false;
+
+        for bookmark in self.bookmarks.iter_mut() {
+            if bookmark.name == name {
+                found = true;
+                bookmark.url = String::from(url); 
+            }
+        }
+
+        if !found {
+            let bookmark = Bookmark::new(String::from(name), String::from(url));
+
+            self.bookmarks.push(bookmark);
+        }
+    }
+}
 
 fn add_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str, url: &str) -> Result<()> {
     let bookmark = Bookmark::new(String::from(name), String::from(url));
@@ -70,6 +88,13 @@ fn add_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str, u
     bookmark_list.add(bookmark);
     bookmark_list.save(&config)?;
 
+    Ok(())
+}
+
+fn update_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str, url: &str) -> Result<()> {
+    bookmark_list.update(&name, &url);
+    bookmark_list.save(&config)?;
+ 
     Ok(())
 }
 
@@ -91,6 +116,16 @@ fn main() -> Result<()> {
                  .required(true)
             .index(2)
                  .help("Hidden service url")))
+        .subcommand(SubCommand::with_name("update")
+            .about("Update an existing bookmark")
+            .arg(Arg::with_name("name")
+                 .required(true)
+                 .index(1)
+                 .help("Name of the bookmark"))
+            .arg(Arg::with_name("url")
+                 .required(true)
+            .index(2)
+                 .help("Hidden service url")))
         .get_matches();
 
     let location = matches.value_of("location").unwrap_or("marktor.json");
@@ -104,6 +139,13 @@ fn main() -> Result<()> {
         let url = sub_match.value_of("url").unwrap();
 
         add_bookmark(&config, &mut bookmark_list, name, url)?;
+    }
+
+    if let Some(sub_match) = matches.subcommand_matches("update") {
+        let name = sub_match.value_of("name").unwrap();
+        let url = sub_match.value_of("url").unwrap();
+
+        update_bookmark(&config, &mut bookmark_list, name, url)?;
     }
 
     Ok(())
