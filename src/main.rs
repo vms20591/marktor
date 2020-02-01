@@ -1,3 +1,5 @@
+use std::path::Path;
+use std::fs::File;
 use std::io::Result;
 use clap::{Arg, App, SubCommand};
 use serde::{Serialize, Deserialize};
@@ -8,6 +10,11 @@ struct Bookmark {
     url: String
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct BookmarkList {
+    bookmarks: Vec<Bookmark>
+}
+
 struct Config {
     location: String
 }
@@ -15,20 +22,6 @@ struct Config {
 impl Bookmark {
     fn new(name: String, url: String) -> Bookmark {
         Bookmark {name, url} 
-    }
-
-    fn to_json(&self) -> Result<String> {
-        Ok(serde_json::to_string_pretty(self)?)
-    }
-
-    fn save(&self, config: &Config) -> Result<()> {
-        let json = self.to_json()?;
-
-        println!("Saving bookmark: {}", json);
-
-        std::fs::write(&config.location, json)?;
-
-        Ok(()) 
     }
 }
 
@@ -38,10 +31,44 @@ impl Config {
     }
 }
 
-fn add_bookmark(config: &Config, name: &str, url: &str) -> Result<()> {
+impl BookmarkList {
+    fn new() -> BookmarkList {
+        BookmarkList {
+            bookmarks: Vec::new() 
+        } 
+    }
+
+    fn load(config: &Config) -> Result<BookmarkList> {
+        if Path::new(&config.location).exists() {
+            Ok(serde_json::from_reader(File::open(&config.location)?)?)
+        } else {
+            Ok(BookmarkList::new())
+        }
+    } 
+
+    fn add(&mut self, bookmark: Bookmark) {
+        self.bookmarks.push(bookmark);
+    }
+
+    fn to_json(&self) -> Result<String> {
+        Ok(serde_json::to_string_pretty(self)?)
+    }
+
+    fn save(&self, config: &Config) -> Result<()> {
+        let json = self.to_json()?;
+
+        println!("Saving bookmarks...");
+
+        std::fs::write(&config.location, json)?;
+
+        Ok(()) 
+    }}
+
+fn add_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str, url: &str) -> Result<()> {
     let bookmark = Bookmark::new(String::from(name), String::from(url));
 
-    bookmark.save(&config)?;
+    bookmark_list.add(bookmark);
+    bookmark_list.save(&config)?;
 
     Ok(())
 }
@@ -70,11 +97,13 @@ fn main() -> Result<()> {
 
     let config = Config::new(String::from(location));
 
+    let mut bookmark_list = BookmarkList::load(&config)?;
+
     if let Some(sub_match) = matches.subcommand_matches("add") {
         let name = sub_match.value_of("name").unwrap();
         let url = sub_match.value_of("url").unwrap();
 
-        add_bookmark(&config, name, url)?;
+        add_bookmark(&config, &mut bookmark_list, name, url)?;
     }
 
     Ok(())
