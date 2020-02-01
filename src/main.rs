@@ -92,6 +92,15 @@ impl BookmarkList {
 
         self.bookmarks = new_bookmarks;
     }
+
+    fn list(&self) {
+        println!("Name\t\t\t\t\t\t\tURL");
+        println!("====\t\t\t\t\t\t\t===");
+
+        for bookmark in self.bookmarks.iter() {
+            println!("{}\t\t\t\t\t\t{}", bookmark.name, bookmark.url);
+        }
+    }
 }
 
 fn add_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str, url: &str) -> Result<()> {
@@ -115,6 +124,10 @@ fn delete_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str
     bookmark_list.save(&config)?;
  
     Ok(())
+}
+
+fn list_bookmark(bookmark_list: &BookmarkList) {
+    bookmark_list.list();
 }
 
 fn main() -> Result<()> {
@@ -151,6 +164,8 @@ fn main() -> Result<()> {
                  .required(true)
                  .index(1)
                  .help("Name of the bookmark")))
+        .subcommand(SubCommand::with_name("list")
+            .about("List all bookmarks"))
         .get_matches();
 
     let location = matches.value_of("location").unwrap_or("marktor.json");
@@ -177,6 +192,10 @@ fn main() -> Result<()> {
         let name = sub_match.value_of("name").unwrap();
 
         delete_bookmark(&config, &mut bookmark_list, name)?;
+    }
+
+    if let Some(_) = matches.subcommand_matches("list") {
+        list_bookmark(&bookmark_list);
     }
 
     Ok(())
