@@ -3,6 +3,10 @@ name = "marktor"
 version = "0.1.0"
 authors = ["Meenakshi Sundaram V <vms20591@riseup.net>"]
 edition = "2018"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+keywords = ["tor", "bookmark"]
+categories = ["tor", "bookmark", "cli"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
