@@ -80,6 +80,18 @@ impl BookmarkList {
             self.bookmarks.push(bookmark);
         }
     }
+
+    fn delete(&mut self, name: &str) {
+        let mut new_bookmarks: Vec<Bookmark> = Vec::new();
+
+        for bookmark in self.bookmarks.iter() {
+            if bookmark.name != name {
+                new_bookmarks.push(Bookmark::new(bookmark.name.clone(), bookmark.url.clone()));
+            }
+        }
+
+        self.bookmarks = new_bookmarks;
+    }
 }
 
 fn add_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str, url: &str) -> Result<()> {
@@ -93,6 +105,13 @@ fn add_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str, u
 
 fn update_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str, url: &str) -> Result<()> {
     bookmark_list.update(&name, &url);
+    bookmark_list.save(&config)?;
+ 
+    Ok(())
+}
+
+fn delete_bookmark(config: &Config, bookmark_list: &mut BookmarkList, name: &str) -> Result<()> {
+    bookmark_list.delete(&name);
     bookmark_list.save(&config)?;
  
     Ok(())
@@ -124,8 +143,14 @@ fn main() -> Result<()> {
                  .help("Name of the bookmark"))
             .arg(Arg::with_name("url")
                  .required(true)
-            .index(2)
+                 .index(2)
                  .help("Hidden service url")))
+        .subcommand(SubCommand::with_name("delete")
+            .about("Delete an existing bookmark")
+            .arg(Arg::with_name("name")
+                 .required(true)
+                 .index(1)
+                 .help("Name of the bookmark")))
         .get_matches();
 
     let location = matches.value_of("location").unwrap_or("marktor.json");
@@ -146,6 +171,12 @@ fn main() -> Result<()> {
         let url = sub_match.value_of("url").unwrap();
 
         update_bookmark(&config, &mut bookmark_list, name, url)?;
+    }
+
+    if let Some(sub_match) = matches.subcommand_matches("delete") {
+        let name = sub_match.value_of("name").unwrap();
+
+        delete_bookmark(&config, &mut bookmark_list, name)?;
     }
 
     Ok(())
